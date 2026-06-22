@@ -133,14 +133,8 @@ a {
 }
 /* ----- HERO (index) ----- */
 .hero {
-    height: 100vh;
-    background-image: 
-    linear-gradient(to right,
-        rgba(255, 255, 255, 0) 0%,
-        rgba(255, 255, 255, 1) 100%
-        ),
-        url("static/img/fondo.jpg");
-    background-size: cover;
+    height: 50vh;
+    background: linear-gradient(45deg, #22c55e, #0c2115);
     background-position: center;
     background-repeat: no-repeat;
     text-align: center;
