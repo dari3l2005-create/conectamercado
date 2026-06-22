@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Mercado</h1>
+    <h2>Melchor Ocampo</h2>
+    <h3>¡Bienvenido!</h3>
+    <p>Conoce los puestos, productos y promociones de nuestros locatarios</p>
+    <form class="hero-search" action="/buscar/" method="get">
+        <input type="text" name="q" id="buscador" placeholder="Buscar producto... (ej. arroz, jitomate, pollo)">
+        <button type="submit" class="btn btn-green">Buscar</button>
+    </form>
+    <p style="font-size:0.82rem;color:#64748b;margin-top:0.4rem;">Te mostramos los puestos con mejor precio y mejor valoración primero.</p>
+</div>
+
+<p class="section-title">Puestos disponibles</p>
+
+<div class="puestos-grid" id="grid-puestos">
+    {% for loc in puestos %}
+    <a href="/negocio/{{ loc.pk }}/" class="puesto-card">
+        {% if loc.foto_local %}
+            <img class="card-img" src="{{ loc.foto_local.url }}" alt="{{ loc.nombre_negocio }}">
+        {% else %}
+            <div class="card-img" style="display:flex;align-items:center;justify-content:center;font-size:2rem;color:#94a3b8;">&#128722;</div>
+        {% endif %}
+        <div class="card-body">
+            <span class="badge-activo">Activo</span>
+            <h3>{{ loc.nombre_negocio }}</h3>
+            <p>&#11088; {{ loc.promedio_estrellas }} ({{ loc.total_resenas }} reseñas)</p>
+            <p>&#128205; {{ loc.puesto }}</p>
+            <p>&#128222; {{ loc.telefono }}</p>
+        </div>
+    </a>
+    {% empty %}
+    <p style="color:#888;padding:1rem;">No hay puestos activos por el momento.</p>
+    {% endfor %}
+</div>
+
+<script>
+var buscador = document.getElementById('buscador');
+if (buscador) {
+    buscador.addEventListener('keyup', function () {
+        var q = this.value.toLowerCase();
+        document.querySelectorAll('.puesto-card').forEach(function (c) {
+            c.style.display = c.innerText.toLowerCase().includes(q) ? '' : 'none';
+        });
+    });
+}
+(function () {
+    var grid = document.getElementById('grid-puestos');
+    if (!grid || !('IntersectionObserver' in window)) return;
+    grid.classList.add('cm-anim');
+    var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+            if (e.isIntersecting) {
+                e.target.style.transitionDelay = (e.target.dataset.delay || '0') + 'ms';
+                e.target.classList.add('cm-reveal');
+                io.unobserve(e.target);
+            }
+        });
+    }, { threshold: 0.12 });
+    grid.querySelectorAll('.puesto-card').forEach(function (c, i) {
+        c.dataset.delay = (i % 4) * 90;
+        io.observe(c);
+    });
+})();
+</script>
+{% endblock %}

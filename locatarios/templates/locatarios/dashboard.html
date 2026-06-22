@@ -1,0 +1,415 @@
+{% extends 'locatarios/base.html' %}
+{% block title %}Mi espacio - {{ loc.nombre_negocio }}{% endblock %}
+
+{% block content %}
+
+<!-- Encabezado del dashboard -->
+<div class="dash-top">
+    <!-- Cerrar sesión arriba a la izquierda -->
+    <button class="logout-left" onclick="openModal('modal-logout')">&#9166; Cerrar sesión</button>
+
+    <div class="dash-top-inner">
+        <div class="dash-ava">
+            {% if loc.foto_local %}
+                <img src="{{ loc.foto_local.url }}" alt="">
+            {% else %}
+                {{ loc.nombre_completo|slice:":1" }}
+            {% endif %}
+        </div>
+        <div class="dash-info">
+            <h1>{{ loc.nombre_negocio }}</h1>
+            <p>{{ loc.nombre_completo }}{% if loc.puesto %} &middot; &#128205; {{ loc.puesto }}{% endif %}</p>
+            <div class="lic-chip">
+                &#127981; {{ loc.licencia }}
+                {% if loc.estado == 'activo' %}<span class="badge-activo" style="margin-left:6px;">Activo</span>{% elif loc.estado == 'pendiente' %}<span class="badge-pendiente" style="margin-left:6px;">Pendiente</span>{% else %}<span style="color:#ef4444;margin-left:6px;">Suspendido</span>{% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="dash-actions-top">
+        {% if loc.activo %}<a href="/negocio/{{ loc.pk }}/" class="nbtn nbtn-ghost">Ver mi página</a>{% endif %}
+    </div>
+</div>
+
+<!-- Tabs de navegación -->
+<div class="dash-tabs">
+    <button class="tab-btn active" onclick="showTab('perfil', this)">Mi Perfil</button>
+    <button class="tab-btn" onclick="showTab('productos', this)">Mis Productos</button>
+    <button class="tab-btn" onclick="showTab('promociones', this)">Mis Promociones</button>
+    <button class="tab-btn" onclick="showTab('trabajadores', this)">Trabajadores</button>
+    <button class="tab-btn" onclick="showTab('fotos', this)">Fotos del Local</button>
+    <button class="tab-btn" onclick="showTab('resenas', this)">Reseñas</button>
+    <button class="tab-btn" onclick="showTab('cambios', this)">Solicitar Cambios</button>
+</div>
+
+<!-- ══ TAB: MI PERFIL (fotos: locatario y local) ═══════════════════════════ -->
+<div id="tab-perfil" class="tab-panel active">
+    <div class="gestion-header"><h3>Mi perfil y fotos</h3></div>
+    <p style="color:#64748b;font-size:0.85rem;margin-bottom:1rem;">
+        Para cambiar tus fotos, sube la nueva imagen. El cambio se aplica solo cuando el administrador lo aprueba.
+    </p>
+
+    <div class="perfil-fotos">
+        <!-- Foto del locatario (personal) -->
+        <div class="perfil-foto-card">
+            <span class="pf-label">Foto del locatario (personal)</span>
+            {% if loc.foto_perfil %}
+                <img src="{{ loc.foto_perfil.url }}" alt="Foto del locatario">
+            {% else %}
+                <div class="pf-ph">Sin foto</div>
+            {% endif %}
+            <form method="POST" action="/locatarios/cambios/solicitar/" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" value="foto_perfil">
+                <input type="file" name="valor_imagen" accept="image/*" required>
+                <button type="submit" class="btn btn-blue" style="margin-top:.5rem;">Solicitar cambio</button>
+            </form>
+        </div>
+
+        <!-- Foto del local -->
+        <div class="perfil-foto-card">
+            <span class="pf-label">Foto del local</span>
+            {% if loc.foto_local %}
+                <img src="{{ loc.foto_local.url }}" alt="Foto del local">
+            {% else %}
+                <div class="pf-ph">Sin foto</div>
+            {% endif %}
+            <form method="POST" action="/locatarios/cambios/solicitar/" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="tipo" value="foto_local">
+                <input type="file" name="valor_imagen" accept="image/*" required>
+                <button type="submit" class="btn btn-blue" style="margin-top:.5rem;">Solicitar cambio</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ══ TAB: PRODUCTOS ══════════════════════════════════════════════════════ -->
+<div id="tab-productos" class="tab-panel">
+    <div class="gestion-header">
+        <h3>Mis productos</h3>
+        <button class="btn btn-green" onclick="openModal('modal-producto')">+ Agregar</button>
+    </div>
+    <div class="items-list">
+        {% for prod in productos %}
+        <div class="item-row">
+            <div class="item-info" style="display:flex;align-items:center;gap:.7rem;">
+                {% if prod.imagen %}<img src="{{ prod.imagen.url }}" class="item-thumb" alt="">{% endif %}
+                <div>
+                    <strong>{{ prod.nombre }}</strong>
+                    <span>${{ prod.precio }} &mdash; {{ prod.descripcion }}</span>
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="icon-btn edit" onclick="openEditProducto({{ prod.pk }}, '{{ prod.nombre|escapejs }}', '{{ prod.precio }}', '{{ prod.descripcion|escapejs }}')">✏️</button>
+                <a href="/locatarios/productos/eliminar/{{ prod.pk }}/" class="icon-btn del" onclick="return confirm('¿Eliminar producto?')">🗑️</a>
+            </div>
+        </div>
+        {% empty %}
+        <p style="color:#aaa;font-size:0.88rem;padding:0.5rem 0;">Sin productos. Agrega el primero.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ══ TAB: PROMOCIONES ════════════════════════════════════════════════════ -->
+<div id="tab-promociones" class="tab-panel">
+    <div class="gestion-header">
+        <h3>Mis promociones</h3>
+        <button class="btn btn-green" onclick="openModal('modal-promo')">+ Agregar</button>
+    </div>
+    <div class="items-list">
+        {% for promo in promociones %}
+        <div class="item-row">
+            <div class="item-info" style="display:flex;align-items:center;gap:.7rem;">
+                {% if promo.imagen %}<img src="{{ promo.imagen.url }}" class="item-thumb" alt="">{% endif %}
+                <div>
+                    <strong>{{ promo.titulo }}</strong>
+                    <span>{{ promo.descripcion }}{% if promo.vigencia %} &mdash; hasta {{ promo.vigencia }}{% endif %}</span>
+                </div>
+            </div>
+            <div class="item-actions">
+                <button class="icon-btn edit" onclick="openEditPromo({{ promo.pk }}, '{{ promo.titulo|escapejs }}', '{{ promo.descripcion|escapejs }}', '{{ promo.vigencia|date:'Y-m-d' }}')">✏️</button>
+                <a href="/locatarios/promociones/eliminar/{{ promo.pk }}/" class="icon-btn del" onclick="return confirm('¿Eliminar promoción?')">🗑️</a>
+            </div>
+        </div>
+        {% empty %}
+        <p style="color:#aaa;font-size:0.88rem;padding:0.5rem 0;">Sin promociones. Agrega la primera.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ══ TAB: TRABAJADORES ═══════════════════════════════════════════════════ -->
+<div id="tab-trabajadores" class="tab-panel">
+    <div class="gestion-header">
+        <h3>Mis trabajadores</h3>
+        <button class="btn btn-green" onclick="openModal('modal-trabajador')">+ Agregar trabajador</button>
+    </div>
+    <div class="trabajadores-grid">
+        {% for t in trabajadores %}
+        <div class="trabajador-card">
+            {% if t.foto %}
+                <img class="trabajador-foto" src="{{ t.foto.url }}" alt="{{ t.nombre }}">
+            {% else %}
+                <div class="trabajador-foto trabajador-foto-ph">{{ t.nombre|slice:":1" }}</div>
+            {% endif %}
+            <strong>{{ t.nombre }}</strong>
+            {% if t.puesto %}<span>{{ t.puesto }}</span>{% endif %}
+            <div class="item-actions" style="margin-top:.4rem;">
+                <button class="icon-btn edit" onclick="openEditTrabajador({{ t.pk }}, '{{ t.nombre|escapejs }}', '{{ t.puesto|escapejs }}')">✏️</button>
+                <a href="/locatarios/trabajadores/eliminar/{{ t.pk }}/" class="icon-btn del" onclick="return confirm('¿Eliminar trabajador?')">🗑️</a>
+            </div>
+        </div>
+        {% empty %}
+        <p style="color:#aaa;font-size:0.88rem;">Sin trabajadores. Agrega al primero.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ══ TAB: FOTOS DEL LOCAL (galería) ══════════════════════════════════════ -->
+<div id="tab-fotos" class="tab-panel">
+    <div class="gestion-header">
+        <h3>Fotos del local (galería)</h3>
+        <button class="btn btn-green" onclick="openModal('modal-foto')">+ Subir foto</button>
+    </div>
+    <div class="fotos-grid">
+        {% for foto in fotos %}
+        <div style="position:relative;">
+            <img src="data:{{ foto.tipo }};base64,{{ foto.datos_b64 }}" alt="{{ foto.nombre_archivo }}">
+            <a href="/locatarios/fotos/eliminar/{{ foto.foto_id }}/" onclick="return confirm('¿Eliminar foto?')"
+               style="position:absolute;top:4px;right:4px;background:rgba(239,68,68,0.85);color:white;border-radius:4px;padding:2px 5px;font-size:0.7rem;">X</a>
+        </div>
+        {% empty %}
+        <p style="color:#aaa;font-size:0.88rem;">Sin fotos del local.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ══ TAB: RESEÑAS RECIBIDAS ══════════════════════════════════════════════ -->
+<div id="tab-resenas" class="tab-panel">
+    <div class="gestion-header">
+        <h3>Reseñas de mis clientes &nbsp; <span style="font-weight:400;color:#64748b;font-size:.9rem;">&#11088; {{ loc.promedio_estrellas }} ({{ loc.total_resenas }})</span></h3>
+    </div>
+    <div class="resenas-list">
+        {% for r in resenas %}
+        <div class="resena-card">
+            <div class="resena-top">
+                <div class="resena-avatar">{{ r.nombre_cliente|slice:":1" }}</div>
+                <div>
+                    <strong>{{ r.nombre_cliente }}</strong>
+                    <div class="stars-static">
+                        {% for i in "12345" %}{% if forloop.counter <= r.calificacion %}&#11088;{% else %}<span style="opacity:.3;">&#11088;</span>{% endif %}{% endfor %}
+                    </div>
+                </div>
+                <span class="resena-fecha">{{ r.fecha|date:"d/m/Y" }}</span>
+            </div>
+            {% if r.comentario %}<p class="resena-texto">{{ r.comentario }}</p>{% endif %}
+        </div>
+        {% empty %}
+        <p style="color:#aaa;font-size:0.88rem;">Todavía no tienes reseñas.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ══ TAB: SOLICITAR CAMBIOS (texto) ══════════════════════════════════════ -->
+<div id="tab-cambios" class="tab-panel">
+    <div class="gestion-header">
+        <h3>Solicitar cambio al administrador</h3>
+    </div>
+    <form method="POST" action="/locatarios/cambios/solicitar/" style="max-width:480px;">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>Tipo de cambio</label>
+            <select name="tipo">
+                <option value="nombre_negocio">Nombre del negocio</option>
+                <option value="puesto">Número de puesto</option>
+                <option value="descripcion">Descripción</option>
+                <option value="ubicacion">Ubicación</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Nuevo valor</label>
+            <input type="text" name="valor_nuevo" required placeholder="Escribe el nuevo dato">
+        </div>
+        <button type="submit" class="btn btn-blue">Enviar solicitud</button>
+    </form>
+</div>
+
+
+<!-- ══ MODALES ════════════════════════════════════════════════════════════ -->
+
+<!-- Modal: confirmar cerrar sesión -->
+<div id="modal-logout" class="modal-overlay">
+    <div class="modal-box" style="max-width:380px;text-align:center;">
+        <h3>¿Estás segura de cerrar sesión?</h3>
+        <p style="color:#64748b;font-size:.9rem;margin:.5rem 0 1.2rem;">Tendrás que volver a iniciar sesión para entrar a tu panel.</p>
+        <div class="modal-actions" style="justify-content:center;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('modal-logout')">Cancelar</button>
+            <a href="/locatarios/logout/" class="btn btn-red">Sí, cerrar sesión</a>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: agregar producto -->
+<div id="modal-producto" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Agregar producto</h3>
+        <form method="POST" action="/locatarios/productos/agregar/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Nombre</label><input type="text" name="nombre" required></div>
+            <div class="form-group"><label>Precio ($)</label><input type="number" name="precio" step="0.01" min="0" required></div>
+            <div class="form-group"><label>Descripción</label><textarea name="descripcion"></textarea></div>
+            <div class="form-group"><label>Imagen del producto</label><input type="file" name="imagen" accept="image/*"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-producto')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: editar producto -->
+<div id="modal-editar-producto" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Editar producto</h3>
+        <form method="POST" id="form-editar-producto" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Nombre</label><input type="text" name="nombre" id="ep-nombre" required></div>
+            <div class="form-group"><label>Precio ($)</label><input type="number" name="precio" id="ep-precio" step="0.01" required></div>
+            <div class="form-group"><label>Descripción</label><textarea name="descripcion" id="ep-desc"></textarea></div>
+            <div class="form-group"><label>Cambiar imagen (opcional)</label><input type="file" name="imagen" accept="image/*"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-editar-producto')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: agregar promoción -->
+<div id="modal-promo" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Agregar promoción</h3>
+        <form method="POST" action="/locatarios/promociones/agregar/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Título</label><input type="text" name="titulo" required></div>
+            <div class="form-group"><label>Descripción</label><textarea name="descripcion"></textarea></div>
+            <div class="form-group"><label>Vigencia (opcional)</label><input type="date" name="vigencia"></div>
+            <div class="form-group"><label>Imagen de la promoción</label><input type="file" name="imagen" accept="image/*"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-promo')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: editar promoción -->
+<div id="modal-editar-promo" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Editar promoción</h3>
+        <form method="POST" id="form-editar-promo" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Título</label><input type="text" name="titulo" id="epr-titulo" required></div>
+            <div class="form-group"><label>Descripción</label><textarea name="descripcion" id="epr-desc"></textarea></div>
+            <div class="form-group"><label>Vigencia</label><input type="date" name="vigencia" id="epr-vig"></div>
+            <div class="form-group"><label>Cambiar imagen (opcional)</label><input type="file" name="imagen" accept="image/*"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-editar-promo')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: agregar trabajador -->
+<div id="modal-trabajador" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Agregar trabajador</h3>
+        <form method="POST" action="/locatarios/trabajadores/agregar/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Nombre</label><input type="text" name="nombre" required></div>
+            <div class="form-group"><label>Puesto / rol</label><input type="text" name="puesto" placeholder="Ej. Cajero, Despachador"></div>
+            <div class="form-group"><label>Foto del trabajador</label><input type="file" name="foto" accept="image/*"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-trabajador')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Guardar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: editar trabajador -->
+<div id="modal-editar-trabajador" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Editar trabajador</h3>
+        <form method="POST" id="form-editar-trabajador" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Nombre</label><input type="text" name="nombre" id="et-nombre" required></div>
+            <div class="form-group"><label>Puesto / rol</label><input type="text" name="puesto" id="et-puesto"></div>
+            <div class="form-group"><label>Cambiar foto (opcional)</label><input type="file" name="foto" accept="image/*"></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-editar-trabajador')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Actualizar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: subir foto galería -->
+<div id="modal-foto" class="modal-overlay">
+    <div class="modal-box">
+        <h3>Subir foto del local</h3>
+        <form method="POST" action="/locatarios/fotos/subir/" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group"><label>Selecciona imagen</label><input type="file" name="foto" accept="image/*" required></div>
+            <div class="modal-actions">
+                <button type="button" class="btn btn-outline" onclick="closeModal('modal-foto')">Cancelar</button>
+                <button type="submit" class="btn btn-green">Subir</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+function showTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('tab-' + name).classList.add('active');
+    btn.classList.add('active');
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function openEditProducto(pk, nombre, precio, desc) {
+    document.getElementById('form-editar-producto').action = '/locatarios/productos/editar/' + pk + '/';
+    document.getElementById('ep-nombre').value = nombre;
+    document.getElementById('ep-precio').value = precio;
+    document.getElementById('ep-desc').value   = desc;
+    openModal('modal-editar-producto');
+}
+
+function openEditPromo(pk, titulo, desc, vig) {
+    document.getElementById('form-editar-promo').action = '/locatarios/promociones/editar/' + pk + '/';
+    document.getElementById('epr-titulo').value = titulo;
+    document.getElementById('epr-desc').value   = desc;
+    document.getElementById('epr-vig').value    = vig;
+    openModal('modal-editar-promo');
+}
+
+function openEditTrabajador(pk, nombre, puesto) {
+    document.getElementById('form-editar-trabajador').action = '/locatarios/trabajadores/editar/' + pk + '/';
+    document.getElementById('et-nombre').value = nombre;
+    document.getElementById('et-puesto').value = puesto;
+    openModal('modal-editar-trabajador');
+}
+
+// Cerrar modal al click fuera
+document.querySelectorAll('.modal-overlay').forEach(function(m) {
+    m.addEventListener('click', function(e) {
+        if (e.target === m) m.classList.remove('open');
+    });
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,169 @@
+{% extends 'locatarios/base.html' %}
+{% block title %}Panel Administrador{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+        <span class="brand">&#9962; Admin CM360</span>
+        <ul>
+            <li><a href="#sec-pendientes" class="active">Solicitudes</a></li>
+            <li><a href="#sec-activos">Locatarios activos</a></li>
+            <li><a href="#sec-cambios">Cambios pendientes</a></li>
+            <li><a href="#sec-suspendidos">Suspendidos</a></li>
+            <li><a href="/locatarios/admin/logout/" style="color:#ef4444;">Salir</a></li>
+        </ul>
+    </aside>
+
+    <!-- Contenido -->
+    <main class="admin-content">
+        <h2>Panel de Administración</h2>
+
+        <!-- Stats -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="num">{{ pendientes|length }}</div>
+                <div class="lbl">Pendientes</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ activos|length }}</div>
+                <div class="lbl">Activos</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ solicitudes|length }}</div>
+                <div class="lbl">Cambios</div>
+            </div>
+            <div class="stat-card">
+                <div class="num">{{ suspendidos|length }}</div>
+                <div class="lbl">Suspendidos</div>
+            </div>
+        </div>
+
+        <!-- ── Solicitudes pendientes ── -->
+        <h3 id="sec-pendientes" style="margin-bottom:0.75rem;font-size:1rem;color:#1a1a2e;">Solicitudes de registro pendientes</h3>
+        <table class="admin-table" style="margin-bottom:2rem;">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Teléfono</th>
+                    <th>Fecha</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loc in pendientes %}
+                <tr>
+                    <td>{{ loc.nombre_completo }}</td>
+                    <td>{{ loc.correo }}</td>
+                    <td>{{ loc.telefono }}</td>
+                    <td>{{ loc.fecha_registro }}</td>
+                    <td>
+                        <a href="/locatarios/admin/aprobar/{{ loc.pk }}/" class="btn btn-green" style="font-size:0.78rem;padding:0.3rem 0.7rem;">Aprobar</a>
+                        <a href="/locatarios/admin/rechazar/{{ loc.pk }}/" class="btn btn-red" style="font-size:0.78rem;padding:0.3rem 0.7rem;" onclick="return confirm('¿Rechazar?')">Rechazar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="color:#aaa;text-align:center;">Sin solicitudes pendientes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- ── Locatarios activos ── -->
+        <h3 id="sec-activos" style="margin-bottom:0.75rem;font-size:1rem;color:#1a1a2e;">Locatarios activos</h3>
+        <table class="admin-table" style="margin-bottom:2rem;">
+            <thead>
+                <tr>
+                    <th>Negocio</th>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Licencia</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for loc in activos %}
+                <tr>
+                    <td>{{ loc.nombre_negocio|default:"Sin nombre" }}</td>
+                    <td>{{ loc.nombre_completo }}</td>
+                    <td>{{ loc.correo }}</td>
+                    <td>
+                        {% if loc.licencia %}
+                            <span class="licencia-badge">{{ loc.licencia }}</span>
+                        {% else %}
+                            <span class="licencia-badge sin">Sin licencia</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/locatarios/admin/licencia/{{ loc.pk }}/" class="btn btn-blue" style="font-size:0.78rem;padding:0.3rem 0.7rem;">Generar licencia</a>
+                        <a href="/locatarios/admin/rechazar/{{ loc.pk }}/" class="btn btn-red" style="font-size:0.78rem;padding:0.3rem 0.7rem;" onclick="return confirm('¿Suspender?')">Suspender</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="color:#aaa;text-align:center;">Sin locatarios activos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- ── Solicitudes de cambio ── -->
+        <h3 id="sec-cambios" style="margin-bottom:0.75rem;font-size:1rem;color:#1a1a2e;">Solicitudes de cambio</h3>
+        <table class="admin-table" style="margin-bottom:2rem;">
+            <thead>
+                <tr>
+                    <th>Locatario</th>
+                    <th>Tipo</th>
+                    <th>Nuevo valor</th>
+                    <th>Fecha</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sol in solicitudes %}
+                <tr>
+                    <td>{{ sol.locatario.nombre_completo }}</td>
+                    <td>{{ sol.get_tipo_display }}</td>
+                    <td>
+                        {% if sol.valor_imagen %}
+                            <a href="{{ sol.valor_imagen.url }}" target="_blank">
+                                <img src="{{ sol.valor_imagen.url }}" alt="nueva foto" style="width:54px;height:54px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;">
+                            </a>
+                        {% else %}
+                            {{ sol.valor_nuevo }}
+                        {% endif %}
+                    </td>
+                    <td>{{ sol.fecha|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="/locatarios/admin/cambio/aprobar/{{ sol.pk }}/" class="btn btn-green" style="font-size:0.78rem;padding:0.3rem 0.7rem;">Aprobar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" style="color:#aaa;text-align:center;">Sin cambios pendientes.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- ── Suspendidos ── -->
+        <h3 id="sec-suspendidos" style="margin-bottom:0.75rem;font-size:1rem;color:#1a1a2e;">Locatarios suspendidos</h3>
+        <table class="admin-table">
+            <thead>
+                <tr><th>Nombre</th><th>Correo</th><th>Acción</th></tr>
+            </thead>
+            <tbody>
+                {% for loc in suspendidos %}
+                <tr>
+                    <td>{{ loc.nombre_completo }}</td>
+                    <td>{{ loc.correo }}</td>
+                    <td>
+                        <a href="/locatarios/admin/aprobar/{{ loc.pk }}/" class="btn btn-green" style="font-size:0.78rem;padding:0.3rem 0.7rem;">Reactivar</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" style="color:#aaa;text-align:center;">Sin locatarios suspendidos.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </main>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends 'locatarios/base.html' %}
+{% block title %}Registro de Locatario{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h2>Registro de Locatario</h2>
+
+        <form method="POST" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Nombre completo</label>
+                <input type="text" name="nombre_completo" required placeholder="Ej. María García López">
+            </div>
+
+            <div class="form-group">
+                <label>Correo electrónico</label>
+                <input type="email" name="correo" required placeholder="correo@ejemplo.com">
+            </div>
+
+            <div class="form-group">
+                <label>Teléfono</label>
+                <input type="text" name="telefono" placeholder="Ej. 5512345678">
+            </div>
+
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" name="contrasena" required placeholder="Mínimo 6 caracteres">
+            </div>
+
+            <div class="form-group">
+                <label>Foto del locatario (personal) <span style="color:#ef4444;">*</span></label>
+                <input type="file" name="foto_perfil" accept="image/*" required>
+                <small style="color:#888;">Tu foto personal. Aparecerá dentro de tu información, no como imagen del puesto.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Foto del local <span style="color:#ef4444;">*</span></label>
+                <input type="file" name="foto_local" accept="image/*" required>
+                <small style="color:#888;">Foto de tu puesto/negocio. Es la que verán los clientes en la lista.</small>
+            </div>
+
+            <button type="submit" class="btn btn-green">Enviar solicitud</button>
+        </form>
+
+        <div class="pendiente-msg">
+            Tu solicitud será revisada por el administrador antes de poder ingresar.
+        </div>
+
+        <div class="auth-footer">
+            ¿Ya tienes cuenta? <a href="/locatarios/login/">Inicia sesión</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

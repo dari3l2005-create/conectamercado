@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ConectaMercado 360 - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="container-logo">
+        <img src="/static/img/logo.png" alt="mercado melchor ocampo">
+         <a href="/" >ConectaMercado 360</a>
+    </div>
+    <div class="nav-actions">
+        {% if request.session.locatario_id %}
+            <a href="/locatarios/dashboard/" class="btn btn-outline">Mi panel</a>
+            <a href="/locatarios/logout/" class="btn btn-red" onclick="return confirm('¿Estás segura de cerrar sesión?')">Salir</a>
+        {% else %}
+            <a href="/locatarios/login/" class="btn btn-outline">Iniciar sesión</a>
+            <a href="/locatarios/registro/" class="btn btn-green">Registrarse</a>
+        {% endif %}
+    </div>
+    
+</nav>
+
+{% if messages %}
+    {% for msg in messages %}
+        <div class="msg {{ msg.tags }}">{{ msg }}</div>
+    {% endfor %}
+{% endif %}
+
+{% block content %}{% endblock %}
+
+</body>
+</html>

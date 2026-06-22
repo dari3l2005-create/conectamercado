@@ -1,0 +1,28 @@
+{% extends 'locatarios/base.html' %}
+{% block title %}Admin - Acceso{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <h2 style="color:#1a1a2e;">&#128274; Panel Administrador</h2>
+        <p style="text-align:center;font-size:0.82rem;color:#888;margin-bottom:1.2rem;">ConectaMercado 360</p>
+
+        <form method="POST">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Usuario</label>
+                <input type="text" name="usuario" required placeholder="admin">
+            </div>
+            <div class="form-group">
+                <label>Contraseña</label>
+                <input type="password" name="contrasena" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-green">Ingresar</button>
+        </form>
+
+        <div class="auth-footer">
+            <a href="/">Volver al inicio</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

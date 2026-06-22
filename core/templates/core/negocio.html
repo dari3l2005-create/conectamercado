@@ -1,0 +1,232 @@
+{% extends 'core/base.html' %}
+{% block title %}{{ loc.nombre_negocio }}{% endblock %}
+
+{% block content %}
+<div class="detalle-wrapper">
+
+    <div class="detalle-header">
+        {% if loc.foto_local %}
+            <img src="{{ loc.foto_local.url }}" alt="{{ loc.nombre_negocio }}">
+        {% else %}
+            <div style="width:120px;height:120px;border-radius:14px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;font-size:2.5rem;">&#128722;</div>
+        {% endif %}
+        <div class="info">
+            <span class="badge-activo">Activo</span>
+            <h2>{{ loc.nombre_negocio }}</h2>
+
+            <!-- Valoración -->
+            <div class="rating-line">
+                {% with prom=loc.promedio_estrellas %}
+                <span class="stars-static">
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= prom %}&#11088;{% else %}<span style="opacity:.3;">&#11088;</span>{% endif %}
+                    {% endfor %}
+                </span>
+                <strong>{{ prom }}</strong>
+                <span style="color:#64748b;">({{ loc.total_resenas }} reseñas)</span>
+                {% endwith %}
+            </div>
+
+            <p>&#128205; Puesto: {{ loc.puesto }}</p>
+            <p>&#128222; {{ loc.telefono }}</p>
+            <p>&#128231; {{ loc.correo }}</p>
+            <p>&#128197; Desde: {{ loc.fecha_registro }}</p>
+            {% if loc.descripcion %}
+            <p style="margin-top:0.4rem;color:#444;">{{ loc.descripcion }}</p>
+            {% endif %}
+            {% if loc.ubicacion %}
+            <p>&#128270; {{ loc.ubicacion }}</p>
+            {% endif %}
+
+            <!-- Foto personal del locatario (dentro de la info, NO como imagen del local) -->
+            {% if loc.foto_perfil %}
+            <div class="locatario-personal">
+                <img src="{{ loc.foto_perfil.url }}" alt="{{ loc.nombre_completo }}">
+                <div>
+                    <span class="lp-label">Locatario</span>
+                    <strong>{{ loc.nombre_completo }}</strong>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Trabajadores (¿quién está atendiendo?) -->
+    {% if trabajadores %}
+    <div class="detalle-section">
+        <h4>¿Quién está atendiendo?</h4>
+        <div class="trabajadores-grid">
+            {% for t in trabajadores %}
+            <div class="trabajador-card">
+                {% if t.foto %}
+                    <img class="trabajador-foto" src="{{ t.foto.url }}" alt="{{ t.nombre }}">
+                {% else %}
+                    <div class="trabajador-foto trabajador-foto-ph">{{ t.nombre|slice:":1" }}</div>
+                {% endif %}
+                <strong>{{ t.nombre }}</strong>
+                {% if t.puesto %}<span>{{ t.puesto }}</span>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Productos -->
+    <div class="detalle-section">
+        <h4>Productos</h4>
+        <div class="prod-grid">
+            {% for prod in productos %}
+            <div class="prod-card">
+                {% if prod.imagen %}
+                    <img class="prod-img" src="{{ prod.imagen.url }}" alt="{{ prod.nombre }}">
+                {% else %}
+                    <div class="prod-img prod-img-ph">&#127828;</div>
+                {% endif %}
+                <div class="prod-card-body">
+                    <strong>{{ prod.nombre }}</strong>
+                    <span class="prod-precio">${{ prod.precio }}</span>
+                    {% if prod.descripcion %}<small>{{ prod.descripcion }}</small>{% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;font-size:0.85rem;">Sin productos registrados.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Promociones -->
+    <div class="detalle-section">
+        <h4>Promociones</h4>
+        <div class="prod-grid">
+            {% for promo in promociones %}
+            <div class="prod-card">
+                {% if promo.imagen %}
+                    <img class="prod-img" src="{{ promo.imagen.url }}" alt="{{ promo.titulo }}">
+                {% else %}
+                    <div class="prod-img prod-img-ph">&#127991;</div>
+                {% endif %}
+                <div class="prod-card-body">
+                    <strong>{{ promo.titulo }}</strong>
+                    <small>{{ promo.descripcion }}</small>
+                    {% if promo.vigencia %}
+                    <span style="color:#94a3b8;font-size:0.78rem;">Vigente hasta: {{ promo.vigencia }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <p style="color:#aaa;font-size:0.85rem;">Sin promociones activas.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Fotos del local (galería) -->
+    <div class="detalle-section">
+        <h4>Fotos del local</h4>
+        <div class="fotos-grid">
+            {% for foto in fotos %}
+            <img src="data:{{ foto.tipo }};base64,{{ foto.datos_b64 }}" alt="Foto del local">
+            {% empty %}
+            <p style="color:#aaa;font-size:0.85rem;">Sin fotos del local.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ══ RESEÑAS (estilo Google Maps) ══════════════════════════════════════ -->
+    <div class="detalle-section resenas-section">
+        <h4>Reseñas de clientes</h4>
+
+        <div class="resenas-resumen">
+            <div class="resumen-num">{{ loc.promedio_estrellas }}</div>
+            <div>
+                <div class="stars-static big">
+                    {% with prom=loc.promedio_estrellas %}
+                    {% for i in "12345" %}
+                        {% if forloop.counter <= prom %}&#11088;{% else %}<span style="opacity:.3;">&#11088;</span>{% endif %}
+                    {% endfor %}
+                    {% endwith %}
+                </div>
+                <span style="color:#64748b;font-size:0.85rem;">{{ loc.total_resenas }} reseñas</span>
+            </div>
+        </div>
+
+        <!-- Lista de reseñas -->
+        <div class="resenas-list">
+            {% for r in resenas %}
+            <div class="resena-card">
+                <div class="resena-top">
+                    <div class="resena-avatar">{{ r.nombre_cliente|slice:":1" }}</div>
+                    <div>
+                        <strong>{{ r.nombre_cliente }}</strong>
+                        <div class="stars-static">
+                            {% for i in "12345" %}
+                                {% if forloop.counter <= r.calificacion %}&#11088;{% else %}<span style="opacity:.3;">&#11088;</span>{% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <span class="resena-fecha">{{ r.fecha|date:"d/m/Y" }}</span>
+                </div>
+                {% if r.comentario %}<p class="resena-texto">{{ r.comentario }}</p>{% endif %}
+            </div>
+            {% empty %}
+            <p style="color:#aaa;font-size:0.85rem;">Aún no hay reseñas. ¡Sé el primero!</p>
+            {% endfor %}
+        </div>
+
+        <!-- Formulario para dejar reseña -->
+        <div class="resena-form-box">
+            <h5>Deja tu reseña</h5>
+            <form method="POST" action="/negocio/{{ loc.pk }}/resena/">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label>Tu nombre</label>
+                    <input type="text" name="nombre_cliente" placeholder="Ej. Juan Pérez" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Tu calificación</label>
+                    <div class="star-input" id="starInput">
+                        <span data-v="1">&#9733;</span>
+                        <span data-v="2">&#9733;</span>
+                        <span data-v="3">&#9733;</span>
+                        <span data-v="4">&#9733;</span>
+                        <span data-v="5">&#9733;</span>
+                    </div>
+                    <input type="hidden" name="calificacion" id="calificacionInput" value="5">
+                </div>
+
+                <div class="form-group">
+                    <label>Comentario</label>
+                    <textarea name="comentario" placeholder="¿Qué te pareció este puesto?"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-green">Publicar reseña</button>
+            </form>
+        </div>
+    </div>
+
+    <a href="/" style="color:#22c55e;font-size:0.88rem;">&larr; Regresar al inicio</a>
+</div>
+
+<script>
+// Selector de estrellas interactivo
+(function() {
+    var stars = document.querySelectorAll('#starInput span');
+    var hidden = document.getElementById('calificacionInput');
+    function paint(val) {
+        stars.forEach(function(s) {
+            s.classList.toggle('on', parseInt(s.dataset.v) <= val);
+        });
+    }
+    stars.forEach(function(s) {
+        s.addEventListener('mouseenter', function() { paint(parseInt(s.dataset.v)); });
+        s.addEventListener('click', function() {
+            hidden.value = s.dataset.v;
+            paint(parseInt(s.dataset.v));
+        });
+    });
+    var box = document.getElementById('starInput');
+    if (box) box.addEventListener('mouseleave', function() { paint(parseInt(hidden.value)); });
+    paint(5);
+})();
+</script>
+{% endblock %}

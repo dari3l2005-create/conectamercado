@@ -1,0 +1,52 @@
+{% extends 'core/base.html' %}
+{% block title %}Resultados de "{{ q }}"{% endblock %}
+
+{% block content %}
+<div class="buscar-wrapper">
+    <form class="hero-search hero-search-sm" action="/buscar/" method="get">
+        <input type="text" name="q" value="{{ q }}" placeholder="Buscar producto...">
+        <button type="submit" class="btn btn-green">Buscar</button>
+    </form>
+
+    {% if q %}
+        <p class="section-title">Resultados para "{{ q }}"</p>
+
+        {% if resultados %}
+        <p style="color:#64748b;font-size:0.85rem;margin-bottom:1rem;">
+            Ordenados por mejor precio y mejor valoración.
+        </p>
+        <div class="resultados-list">
+            {% for r in resultados %}
+            <a href="/negocio/{{ r.locatario.pk }}/" class="resultado-card">
+                <div class="resultado-img">
+                    {% if r.locatario.foto_local %}
+                        <img src="{{ r.locatario.foto_local.url }}" alt="{{ r.locatario.nombre_negocio }}">
+                    {% else %}
+                        <div class="resultado-img-ph">&#128722;</div>
+                    {% endif %}
+                </div>
+                <div class="resultado-info">
+                    {% if forloop.first %}<span class="mejor-tag">&#11088; Mejor opción</span>{% endif %}
+                    <h3>{{ r.locatario.nombre_negocio|default:"Puesto" }}</h3>
+                    <p class="resultado-prod">{{ r.producto.nombre }}</p>
+                    <p class="resultado-rating">
+                        &#11088; {{ r.rating }} <span>({{ r.total_resenas }} reseñas)</span>
+                        &nbsp;&middot;&nbsp; &#128205; {{ r.locatario.puesto }}
+                    </p>
+                </div>
+                <div class="resultado-precio">
+                    <span class="precio-num">${{ r.precio }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color:#888;padding:1rem;">No encontramos puestos con "{{ q }}". Intenta con otra palabra.</p>
+        {% endif %}
+    {% else %}
+        <p style="color:#888;padding:1rem;">Escribe un producto para buscar (ej. arroz).</p>
+    {% endif %}
+
+    <a href="/" style="color:#22c55e;font-size:0.88rem;display:inline-block;margin-top:1rem;">&larr; Regresar al inicio</a>
+</div>
+{% endblock %}
