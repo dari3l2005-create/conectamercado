@@ -105,6 +105,8 @@ STORAGES = {
     "staticfiles": {"BACKEND": "whitenoise.storage.CompressedStaticFilesStorage"},
 }
 
+WHITENOISE_MANIFEST_STRICT = False
+WHITENOISE_USE_FINDERS = True
 # ─── MEDIA (fotos subidas) ───
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
